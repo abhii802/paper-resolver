@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resolver</title>
+<style>
+  :root{color-scheme:dark;--bg:#0a0e10;--panel:#101719;--card:#0f1618;--input:#0c1214;
+    --border:#1e2b2e;--border-hover:#2ee6c5;--fg:#dce8e8;--muted:#7d9296;--muted-bg:#14201f;
+    --primary:#2ee6c5;--primary-fg:#04100e;--secondary:#172124;--secondary-fg:#cfe0e0;
+    --success:#34d399;--error:#f87171;--amber:#f59e0b;}
+  html[data-theme="light"]{color-scheme:light;--bg:#f7f8f9;--panel:#fff;--card:#fff;--input:#f2f4f5;
+    --border:#d8dee1;--border-hover:#0d9488;--fg:#101617;--muted:#5c6b6f;--muted-bg:#eef2f3;
+    --primary:#0d9488;--primary-fg:#fff;--secondary:#eef2f3;--secondary-fg:#22302f;
+    --success:#15803d;--error:#b91c1c;--amber:#b45309;}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--fg);min-height:100vh;font:14px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px 16px 60px}
+  .app{max-width:700px;margin:0 auto;padding-bottom:40px}
+  .hdr{display:flex;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  .brand{font-size:17px;font-weight:600;letter-spacing:-.02em}.brand .dot{color:var(--primary)}
+  .stats{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted);display:flex;gap:9px;flex-wrap:wrap}
+  .stats b{color:var(--fg);font-weight:500}.hdrr{margin-left:auto}
+  .ico{padding:3px 9px!important;font-size:13px!important}
+  .tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border);margin-bottom:14px}
+  .tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:8px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;font-family:inherit;border-radius:0}
+  .tab.on{color:var(--fg);border-bottom-color:var(--primary)}
+  .cnt{font-size:9.5px;background:var(--muted-bg);padding:1px 5px;border-radius:99px;color:var(--muted)}
+  .pane{display:none}.pane.on{display:block}
+  .box{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--panel)}
+  .box.drag{border-color:var(--primary)}
+  .lbl{display:block;font-size:10.5px;color:var(--muted);margin:0 0 5px;text-transform:uppercase;letter-spacing:.04em}
+  textarea,input{width:100%;background:var(--input);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:ui-monospace,monospace}
+  #inp{height:70px;resize:vertical}input.inline{flex:1;min-width:150px;width:auto}
+  textarea:focus,input:focus{outline:none;border-color:var(--border-hover)}
+  .row{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;align-items:center}.row .right{margin-left:auto}
+  button,.btn{border-radius:8px;padding:6px 13px;font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;text-decoration:none;display:inline-block;line-height:1.3}
+  button:disabled{opacity:.45;cursor:default}
+  button.primary,.btn.primary{background:var(--primary);color:var(--primary-fg)}
+  button.ghost,.btn.ghost{background:var(--secondary);color:var(--secondary-fg);border-color:var(--border)}
+  button.sm,.btn.sm{padding:4px 9px;font-size:11px}
+  .adv{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:5px 12px}
+  .chk{display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--muted);cursor:pointer;margin-bottom:4px}
+  .chk input{width:auto;accent-color:var(--primary)}
+  .status{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted);margin-top:9px}
+  .hidden{display:none!important}
+  .banner{border:1px solid var(--error);color:var(--error);border-radius:8px;padding:8px 11px;font:11px ui-monospace,monospace;margin-bottom:12px;white-space:pre-wrap}
+  .pipe{display:flex;gap:5px;flex-wrap:wrap;margin:12px 0}
+  .st{font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid var(--border);color:var(--muted)}
+  .st.run{border-color:var(--primary);color:var(--primary)}.st.ok{border-color:var(--success);color:var(--success)}.st.warn{border-color:var(--amber);color:var(--amber)}
+  .out{display:flex;flex-direction:column;gap:11px}
+  .card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+  .ch{display:flex;gap:8px;align-items:baseline;padding:8px 11px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .ch .v{font-family:ui-monospace,monospace;font-size:11px;word-break:break-all;flex:1;min-width:110px}
+  .sum{display:flex;gap:5px;flex-wrap:wrap;padding:8px 11px;border-bottom:1px solid var(--border);align-items:center}
+  .pill{font-size:9.5px;padding:2px 7px;border-radius:99px;border:1px solid var(--border);color:var(--muted)}
+  .pill.g{border-color:var(--success);color:var(--success)}.pill.w{border-color:var(--amber);color:var(--amber)}
+  .meta{padding:9px 11px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--muted)}
+  .meta b{color:var(--fg);font-weight:500;font-size:12.5px}
+  .meta .ab{margin-top:5px;line-height:1.5;max-height:74px;overflow:hidden}.meta .ab.open{max-height:none}
+  .meta a{color:var(--primary);cursor:pointer;font-size:10.5px}
+  .rows{display:flex;flex-direction:column}
+  .cand{display:flex;gap:8px;padding:8px 11px;border-bottom:1px solid var(--border);align-items:flex-start}
+  .cand:last-child{border-bottom:none}.cand.top{background:var(--muted-bg)}
+  .bdg{font-size:9px;padding:2px 6px;border-radius:99px;border:1px solid;flex-shrink:0;margin-top:2px;white-space:nowrap}
+  .t1{border-color:var(--success);color:var(--success)}.t2{border-color:var(--amber);color:var(--amber)}
+  .t3{border-color:#a855f7;color:#a855f7}.t4{border-color:var(--muted);color:var(--muted)}
+  .cb{flex:1;min-width:0}
+  .cb .u{font-family:ui-monospace,monospace;font-size:10.5px;word-break:break-all}
+  .cb .n{font-size:10px;color:var(--muted);margin-top:2px}
+  .cb .rs{font-size:10px;margin-top:3px;color:var(--muted)}.cb .rs a{color:var(--primary)}
+  .bar{height:2px;background:var(--muted-bg);border-radius:2px;margin-top:5px}
+  .bar i{display:block;height:100%;background:var(--primary)}
+  .acts{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;max-width:150px}
+  .acts button,.acts .btn{padding:2px 7px;font-size:10px}
+  .log{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted);padding:7px 11px;border-top:1px solid var(--border);white-space:pre-wrap;line-height:1.5}
+  .prev{border-top:1px solid var(--border);background:var(--muted-bg)}
+  .prev iframe{width:100%;height:460px;border:none;background:#fff;display:block}
+  .prev .ph{padding:12px;text-align:center;font-size:11px;color:var(--muted)}
+  .empty{padding:16px;text-align:center;font-size:11.5px;color:var(--muted);border:1px dashed var(--border);border-radius:12px}
+  .note{font-size:11px;color:var(--muted);line-height:1.55;margin:0 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500;padding:5px 6px;border-bottom:1px solid var(--border)}
+  td{padding:5px 6px;border-bottom:1px solid var(--border);font-family:ui-monospace,monospace;word-break:break-all}
+  .okc{color:var(--success)}.gtc{color:var(--amber)}.dnc{color:var(--error)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+  .cell{border:1px solid var(--border);border-radius:10px;padding:9px;text-align:center}
+  .cell .k{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .cell .v{font-size:19px;font-weight:500;margin-top:2px}
+  h4{font-size:12px;font-weight:500;margin:16px 0 8px}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:9px 0}
+  .toasts{position:sticky;bottom:0;display:flex;flex-direction:column;gap:5px;margin-top:14px}
+  .toast{font-size:11px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card)}
+  .toast.e{border-color:var(--error);color:var(--error)}.toast.s{border-color:var(--success)}
+  .librow{display:flex;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:10px;align-items:flex-start}
+  .librow .cb{font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hdr">
+    <div class="brand">resolver<span class="dot">.</span></div>
+    <div class="stats" id="hstats"></div>
+    <div class="hdrr"><button class="ghost ico" id="themeBtn">&#9686;</button></div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-tab="resolve">Resolve</button>
+    <button class="tab" data-tab="library">Library <span class="cnt" id="libCnt">0</span></button>
+    <button class="tab" data-tab="mirrors">Mirrors</button>
+    <button class="tab" data-tab="stats">Stats</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+
+  <div id="banner" class="banner hidden"></div>
+
+  <section class="pane on" id="p-resolve">
+    <div class="box" id="drop">
+      <label class="lbl" for="inp">Any link, DOI, arXiv, PMID, ISBN, IEEE id or title — one per line</label>
+      <textarea id="inp" spellcheck="false" placeholder="https://ieeexplore.ieee.org/document/11629706
+10.1038/s41586-020-2649-2
+arXiv:1706.03762"></textarea>
+      <div class="row">
+        <button class="primary" id="go">Resolve</button>
+        <button class="ghost" id="paste">Paste</button>
+        <button class="ghost" id="demo">Demo</button>
+        <button class="ghost" id="stop" disabled>Stop</button>
+        <button class="ghost right" id="advBtn">Advanced</button>
+      </div>
+      <div class="adv hidden" id="adv">
+        <label class="chk"><input type="checkbox" id="oDeep" checked><span>Deep scan — all mirrors</span></label>
+        <label class="chk"><input type="checkbox" id="oRender" checked><span>Renderer for gated pages</span></label>
+        <label class="chk"><input type="checkbox" id="oOa" checked><span>Open access first</span></label>
+        <label class="chk"><input type="checkbox" id="oPub" checked><span>Publisher endpoints</span></label>
+        <label class="chk"><input type="checkbox" id="oAuto"><span>Auto-download best</span></label>
+        <label class="chk"><input type="checkbox" id="oTor" checked><span>Tor gateways</span></label>
+        <label class="chk"><input type="checkbox" id="oTg" checked><span>Sci-Net / Telegram</span></label>
+      </div>
+      <div class="status" id="status">ready — single file, no server</div>
+    </div>
+    <div class="pipe" id="pipe"></div>
+    <div id="out" class="out"></div>
+  </section>
+
+  <section class="pane" id="p-library">
+    <div class="row"><button class="ghost sm" id="libExport">Export BibTeX</button>
+      <button class="ghost sm" id="libCsv">Export CSV</button>
+      <button class="ghost sm right" id="libWipe">Wipe</button></div>
+    <div id="libList" class="out"></div>
+  </section>
+
+  <section class="pane" id="p-mirrors">
+    <p class="note">Measured, not assumed. <b>gated</b> = browser challenge, tab still works.</p>
+    <div class="row"><button class="ghost sm" id="mTest">Test all</button>
+      <input id="mAdd" placeholder="https://new-mirror.example" spellcheck="false" class="inline">
+      <button class="ghost sm" id="mAddBtn">Add</button></div>
+    <div id="mTable"></div>
+  </section>
+
+  <section class="pane" id="p-stats">
+    <div id="statGrid" class="grid"></div><h4>Per-host performance</h4>
+    <div id="srcTable"></div>
+    <div class="row"><button class="ghost sm" id="statReset">Reset counters</button></div>
+  </section>
+
+  <section class="pane" id="p-settings">
+    <label class="lbl" for="email">Unpaywall email</label>
+    <input id="email" spellcheck="false" placeholder="you@example.com">
+    <div class="g2">
+      <div><label class="lbl" for="conc">Parallel</label><input id="conc" type="number" min="1" max="4" value="2"></div>
+      <div><label class="lbl" for="tmo">Timeout ms</label><input id="tmo" type="number" min="4000" max="40000" step="1000" value="12000"></div>
+    </div>
+    <h4>Optional upgrade</h4>
+    <label class="lbl" for="proxyUrl">Proxy URL — skip it and everything still runs, with more tab fallbacks</label>
+    <input id="proxyUrl" spellcheck="false" placeholder="https://resolver-proxy.YOU.workers.dev">
+    <div class="row"><button class="ghost sm" id="proxySave">Save + test</button></div>
+    <h4>Lockdown</h4>
+    <label class="chk"><input type="checkbox" id="oProt" checked><span>Block right click, devtools keys, source view, selection</span></label>
+    <label class="chk"><input type="checkbox" id="oTrap"><span>Devtools freeze trap</span></label>
+    <label class="chk"><input type="checkbox" id="oMark" checked><span>Stamp attribution into copied text</span></label>
+    <div class="row"><button class="primary sm" id="sSave">Save</button>
+      <button class="ghost sm" id="sExport">Export config</button>
+      <button class="ghost sm right" id="sWipe">Wipe all data</button></div>
+  </section>
+
+  <div class="toasts" id="toasts"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=function(id){return document.getElementById(id)};
+const esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]})};
+const sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+const uid=function(){return Math.random().toString(36).slice(2,9)};
+const now=function(){return new Date().toLocaleTimeString('en-GB',{hour12:false})};
+function toast(m,k){
+  const d=document.createElement('div');d.className='toast'+(k?' '+k:'');d.textContent=m;
+  $('toasts').appendChild(d);
+  setTimeout(function(){d.style.opacity='0';setTimeout(function(){d.remove()},300)},2600);
+}
+function fail(w,e){
+  $('banner').textContent='['+w+'] '+(e&&e.message?e.message:String(e));
+  $('banner').classList.remove('hidden');console.error(w,e);
+}
+addEventListener('error',function(e){fail('script',e.error||e.message)});
+addEventListener('unhandledrejection',function(e){fail('promise',e.reason)});
+
+const K={cfg:'rx_cfg_11',health:'rx_health_11',relay:'rx_relay_11',lib:'rx_lib_11',stats:'rx_stats_11'};
+const DEF={
+  email:'resolver@example.com',conc:2,tmo:12000,proxyUrl:'',
+  deep:true,render:true,oa:true,pub:true,auto:false,tor:true,tg:true,prot:true,trap:false,mark:true,
+  sci:['https://sci-hub.su','https://sci-hub.st','https://sci-hub.red','https://sci-hub.box','https://sci-hub.ru','https://sci-hub.se'],
+  ann:['https://annas-archive.org','https://annas-archive.se','https://annas-archive.li'],
+  lib:['https://libgen.is','https://libgen.rs','https://libgen.st','https://libgen.li'],
+  nexus:['https://www.nexus-stc.com']
+};
+const LS=function(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const SS=function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const arr=function(v,f){return (Array.isArray(v)&&v.length)?v.filter(function(x){return typeof x==='string'}):f.slice()};
+
+let cfg=Object.assign({},DEF,LS(K.cfg,{}));
+['sci','ann','lib','nexus'].forEach(function(k){cfg[k]=arr(cfg[k],DEF[k])});
+cfg.conc=Math.max(1,Math.min(4,+cfg.conc||2));
+cfg.tmo=Math.max(4000,Math.min(40000,+cfg.tmo||12000));
+let health=LS(K.health,{})||{};
+let rstat=LS(K.relay,{})||{};
+let stats=Object.assign({run:0,ok:0,gated:0,dead:0,dl:0,tab:0},LS(K.stats,{}));
+let lib=LS(K.lib,[])||[];
+const saveCfg=function(){SS(K.cfg,cfg)};
+const saveHealth=function(){SS(K.health,health)};
+const saveStats=function(){SS(K.stats,stats)};
+const saveLib=function(){SS(K.lib,lib);$('libCnt').textContent=lib.length};
+
+const RELAYS=[
+  {id:'jina',on:true,render:true,f:function(u){return 'https://r.jina.ai/'+u}},
+  {id:'codetabs',on:true,f:function(u){return 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)}},
+  {id:'allorigins',on:true,f:function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u)}},
+  {id:'corsproxy',on:true,f:function(u){return 'https://corsproxy.io/?url='+encodeURIComponent(u)}}
+];
+const rScore=function(id){const s=rstat[id]||{};return (s.ok||0)-(s.fail||0)*2.5-((s.ms||600)/200)};
+const rMark=function(id,ok,ms){
+  const s=rstat[id]||{ok:0,fail:0,ms:600};
+  if(ok) s.ok++;else s.fail++;
+  if(ms) s.ms=Math.round((s.ms*2+ms)/3);
+  rstat[id]=s;SS(K.relay,rstat);
+};
+async function net(url,o){
+  o=o||{};
+  const as=o.as||'text',tmo=o.tmo||cfg.tmo,tries=o.tries||1;
+  const routes=[];
+  if(cfg.proxyUrl) routes.push({id:'own-proxy',url:cfg.proxyUrl+'?url='+encodeURIComponent(url)});
+  if(o.direct!==false) routes.push({id:'direct',url:url});
+  if(o.render){
+    const j=RELAYS.filter(function(r){return r.render})[0];
+    if(j&&j.on) routes.push({id:j.id,url:j.f(url)});
+  } else {
+    RELAYS.filter(function(r){return r.on&&!r.render})
+      .sort(function(a,b){return rScore(b.id)-rScore(a.id)})
+      .forEach(function(r){routes.push({id:r.id,url:r.f(url)})});
+  }
+  const capped=o.maxRoutes?routes.slice(0,o.maxRoutes):routes;
+  if(!capped.length) return {ok:false,err:'no route'};
+  let err='no route';
+  for(let i=0;i<capped.length;i++){
+    const r=capped[i];
+    for(let a=0;a<tries;a++){
+      const c=new AbortController();const t=setTimeout(function(){c.abort()},tmo);
+      const t0=performance.now();
+      try{
+        const res=await fetch(r.url,{signal:c.signal,redirect:'follow',cache:'no-store'});
+        clearTimeout(t);
+        if(!res.ok) throw new Error('http '+res.status);
+        let body;
+        if(as==='blob') body=await res.blob();
+        else if(as==='json') body=JSON.parse(await res.text());
+        else body=await res.text();
+        rMark(r.id,true,performance.now()-t0);
+        return {ok:true,body:body,via:r.id};
+      }catch(e){
+        clearTimeout(t);rMark(r.id,false,null);
+        err=(e&&e.message)?e.message:String(e);
+        if(a+1<tries) await sleep(300);
+      }
+    }
+  }
+  return {ok:false,err:err};
+}
+const GATE=/ddos-guard|altcha|are you (a )?robot|checking your browser|just a moment|cf-challenge|access denied/i;
+const gated=function(b){return GATE.test(b||'')};
+
+const RE_DOI=/10\.\d{4,9}\/[^\s"'<>,;)\]]+/i;
+const RE_DOI_MD=[/doi\.org\/(10\.[^\s)\]"'<]+)/i,/DOI:?\**\s*\[?(10\.\d{4,9}\/[^\s)\]"'<]+)/i];
+const clean=function(d){return d.replace(/[.,;)\]]+$/,'').replace(/&amp;/g,'&')};
+
+function parse(raw){
+  const o={raw:String(raw).trim(),doi:null,arxiv:null,pmid:null,isbn:null,title:null,url:null,ieee:null,pii:null,abstract:null,authors:[]};
+  if(!o.raw) return o;
+  let s=o.raw;
+  try{s=decodeURIComponent(s)}catch(e){}
+  if(/^https?:\/\//i.test(s)) o.url=s;
+  const d=s.match(RE_DOI);if(d) o.doi=clean(d[0]);
+  const a=s.match(/arxiv\.org\/(?:abs|pdf)\/([\w.\-\/]+?)(?:v\d+)?(?:\.pdf)?$/i)||s.match(/arxiv[:\s]+(\d{4}\.\d{4,5})/i)||s.match(/^(\d{4}\.\d{4,5})(v\d+)?$/);
+  if(a) o.arxiv=a[1].replace(/\.pdf$/,'');
+  const p=s.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/i)||s.match(/PMID[:\s]*(\d{6,9})/i);
+  if(p) o.pmid=p[1];
+  const i=s.match(/\b(97[89][\d\-]{10,15})\b/);if(i) o.isbn=i[1].replace(/-/g,'');
+  const e=s.match(/ieeexplore\.ieee\.org\/(?:abstract\/|document\/)?(\d{5,10})/i)||s.match(/arnumber=(\d{5,10})/i);
+  if(e) o.ieee=e[1];
+  const pi=s.match(/sciencedirect\.com\/science\/article\/pii\/([A-Z0-9]{8,})/i);
+  if(pi) o.pii=pi[1];
+  if(!o.doi&&!o.arxiv&&!o.pmid&&!o.ieee&&!o.url&&s.length>14) o.title=s;
+  if(!o.doi&&o.url&&!o.arxiv&&!o.pmid){
+    const m=o.url.toLowerCase().match(/\/(?:articles|abs|full|doi|pdf|content|meta)\/(10\.\d{4,9}\/[^?#]+)/);
+    if(m) o.doi=clean(m[1]);
+  }
+  return o;
+}
+
+async function recoverIds(ids,log){
+  if(ids.doi||!ids.url) return ids;
+  const r=await net(ids.url,{as:'text',render:true,direct:false,maxRoutes:2,tmo:22000});
+  if(!r.ok){log('renderer failed: '+r.err);}
+  else if(gated(r.body)){log('renderer hit a challenge');}
+  else{
+    const md=r.body;
+    for(let i=0;i<RE_DOI_MD.length;i++){
+      const m=md.match(RE_DOI_MD[i]);
+      if(m){ids.doi=clean(m[1]);break;}
+    }
+    if(!ids.doi){const m=md.match(RE_DOI);if(m) ids.doi=clean(m[0]);}
+    const t=md.match(/^Title:\s*(.+)$/mi)||md.match(/^#\s+(.+)$/m);
+    if(t&&!ids.title) ids.title=t[1].trim();
+    const ab=md.match(/##\s*Abstract:\s*([\s\S]{80,1400}?)\*\*Published in:\*\*/i);
+    if(ab) ids.abstract=ab[1].replace(/\s+/g,' ').trim().slice(0,900);
+    const au=md.match(/\[([A-Z][^\]\[]{3,60})\]\(https:\/\/ieeexplore\.ieee\.org\/author\//g)||[];
+    ids.authors=au.map(function(s){return s.replace(/^\[|\]\(.*$/g,'')}).slice(0,12);
+    if(ids.doi) log('doi recovered: '+ids.doi);else log('renderer gave no doi');
+  }
+  return ids;
+}
+
+async function meta(ids,seed){
+  const m={title:(seed&&seed.title)||ids.title||null,authors:(seed&&seed.authors&&seed.authors.length?seed.authors:ids.authors)||[],
+           year:(seed&&seed.year)||null,venue:(seed&&seed.venue)||null,abstract:(seed&&seed.abstract)||ids.abstract||null,cites:0,oa:false,doi:ids.doi};
+  const j=async function(u,pick){
+    const r=await net(u,{as:'json',direct:true,maxRoutes:2});
+    if(r.ok){try{pick(r.body)}catch(e){}}
+  };
+  const jobs=[];
+  if(ids.doi){
+    jobs.push(j('https://api.crossref.org/works/'+encodeURIComponent(ids.doi),function(d){
+      const x=d.message||{};
+      m.title=m.title||(x.title||[])[0]||null;
+      if(!m.authors.length&&x.author) m.authors=x.author.map(function(a){return [a.given,a.family].filter(Boolean).join(' ')}).filter(Boolean);
+      m.year=m.year||(x.issued&&x.issued['date-parts']&&x.issued['date-parts'][0][0])||null;
+      m.venue=m.venue||(x['container-title']||[])[0]||null;
+      m.cites=m.cites||x['is-referenced-by-count']||0;
+      if(!m.abstract&&x.abstract) m.abstract=x.abstract.replace(/<[^>]+>/g,'').slice(0,900);
+    }));
+    jobs.push(j('https://api.openalex.org/works/doi:'+encodeURIComponent(ids.doi),function(d){
+      m.title=m.title||d.title||null;m.year=m.year||d.publication_year||null;m.cites=m.cites||d.cited_by_count||0;
+      if(d.open_access&&d.open_access.is_oa) m.oa=true;
+      if(!m.abstract&&d.abstract_inverted_index) m.abstract=recon(d.abstract_inverted_index).slice(0,900);
+      if(!m.authors.length&&d.authorships) m.authors=d.authorships.map(function(a){return a.author&&a.author.display_name}).filter(Boolean);
+    }));
+  } else if(ids.title){
+    jobs.push(j('https://api.crossref.org/works?rows=2&query.bibliographic='+encodeURIComponent(ids.title),function(d){
+      const it=(d.message&&d.message.items||[])[0];if(!it) return;
+      m.title=(it.title||[])[0]||ids.title;
+      m.year=it.issued&&it.issued['date-parts']&&it.issued['date-parts'][0][0];
+      m.venue=(it['container-title']||[])[0];
+      if(it.DOI){m.doi=it.DOI;ids.doi=it.DOI}
+    }));
+  }
+  if(ids.pmid){
+    jobs.push(j('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:'+ids.pmid+'&format=json&resultType=core',function(d){
+      const x=(d.resultList&&d.resultList.result||[])[0];if(!x) return;
+      m.title=m.title||x.title;m.year=m.year||x.pubYear;m.venue=m.venue||x.journalTitle;
+      if(x.doi&&!m.doi){m.doi=x.doi;ids.doi=x.doi}
+    }));
+  }
+  await Promise.all(jobs);
+  return m;
+}
+function recon(inv){
+  if(!inv) return '';
+  const out=[];
+  Object.keys(inv).forEach(function(w){inv[w].forEach(function(p){out[p]=w})});
+  return out.filter(Boolean).join(' ');
+}
+
+const TNAME={1:'open access',2:'grey archive',3:'shadow library',4:'handoff'};
+const blobs=new Map();const urls=new Map();const seen=new Set();
+function mk(c){
+  c.score=(c.score||0)+({1:45,2:32,3:22,4:8}[c.tier]||0)+(c.kind==='pdf'?25:0);
+  return c;
+}
+function grabPdf(html,base){
+  const pats=[/#pdf["']?\s*(?:src|href)=["']([^"']+)/i,/<embed[^>]+src=["']([^"']+)["']/i,
+    /<iframe[^>]+src=["']([^"']+)["']/i,/location\.href\s*=\s*["']([^"']+)["']/i,
+    /(?:src|href)=["']([^"']*\.pdf[^"']*)["']/i,/\]\((https?:\/\/[^)\s]+\.pdf[^)\s]*)\)/,
+    /(https?:\/\/[^"'\s]+\.pdf[^"'\s]*)/i];
+  for(let i=0;i<pats.length;i++){
+    const m=html.match(pats[i]);
+    if(m&&m[1]){
+      let u=m[1].replace(/&amp;/g,'&');
+      if(u.indexOf('//')===0) u='https:'+u;
+      else if(u.charAt(0)==='/') u=base.replace(/\/$/,'')+u;
+      if(/\.pdf|downloads|get\b|stampPDF|pdfft|pdfdirect/i.test(u)||/embed|iframe/.test(pats[i].source)) return u;
+    }
+  }
+  return null;
+}
+
+const PUBPAT=[
+  ['acm','https://dl.acm.org/doi/pdf/{v}'],['springer','https://link.springer.com/content/pdf/{v}.pdf'],
+  ['wiley','https://onlinelibrary.wiley.com/doi/pdfdirect/{v}'],['sage','https://journals.sagepub.com/doi/pdf/{v}'],
+  ['tandf','https://www.tandfonline.com/doi/pdf/{v}'],['mdpi','https://www.mdpi.com/{v}/pdf']
+];
+
+async function stagePublisher(ids,emit,log){
+  if(ids.ieee){
+    emit({url:'https://ieeexplore.ieee.org/stampPDF/getPDF.jsp?tp=&arnumber='+ids.ieee+'&ref=',source:'ieee',tier:1,kind:'pdf',note:'stamp endpoint'});
+    emit({url:'https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber='+ids.ieee,source:'ieee',tier:1,kind:'landing',note:'frameset'});
+  }
+  if(ids.pii) emit({url:'https://www.sciencedirect.com/science/article/pii/'+ids.pii+'/pdfft',source:'sciencedirect',tier:1,kind:'pdf',note:'pii'});
+  if(ids.doi){
+    PUBPAT.forEach(function(p){
+      if(p[0]==='mdpi'&&!/^10\.3390/.test(ids.doi)) return;
+      emit({url:p[1].replace('{v}',ids.doi),source:p[0],tier:1,kind:'pdf',note:'publisher endpoint'});
+    });
+    emit({url:'https://doi.org/'+ids.doi,source:'doi',tier:1,kind:'landing',note:'landing page'});
+  }
+}
+
+async function stageOA(ids,emit,log){
+  const doi=ids.doi,em=encodeURIComponent(cfg.email||'x@y.z');
+  const jobs=[];
+  if(doi&&cfg.oa){
+    jobs.push((async function(){
+      const r=await net('https://api.unpaywall.org/v2/'+encodeURIComponent(doi)+'?email='+em,{as:'json',direct:true,maxRoutes:2});
+      if(!r.ok) return;
+      const d=r.body||{};
+      if(d.best_oa_location&&d.best_oa_location.url_for_pdf)
+        emit({url:d.best_oa_location.url_for_pdf,source:'unpaywall',tier:1,kind:'pdf',note:'licensed OA'});
+      (d.oa_locations||[]).forEach(function(l){
+        if(l.url_for_pdf) emit({url:l.url_for_pdf,source:'unpaywall',tier:1,kind:'pdf',note:l.host_type||'repository'});
+      });
+    })());
+    jobs.push((async function(){
+      const o=await net('https://api.openalex.org/works/doi:'+encodeURIComponent(doi),{as:'json',direct:true,maxRoutes:2});
+      if(!o.ok) return;
+      const d=o.body||{};
+      if(d.best_oa_location&&d.best_oa_location.pdf_url)
+        emit({url:d.best_oa_location.pdf_url,source:'openalex',tier:1,kind:'pdf',note:'best oa'});
+      (d.locations||[]).forEach(function(l){
+        if(l.pdf_url) emit({url:l.pdf_url,source:'openalex',tier:1,kind:'pdf',note:(l.source&&l.source.display_name)||'repo'});
+      });
+    })());
+    jobs.push((async function(){
+      const s=await net('https://api.semanticscholar.org/graph/v1/paper/DOI:'+encodeURIComponent(doi)+'?fields=openAccessPdf',{as:'json',direct:true,maxRoutes:2});
+      if(s.ok&&s.body&&s.body.openAccessPdf&&s.body.openAccessPdf.url)
+        emit({url:s.body.openAccessPdf.url,source:'semantic scholar',tier:1,kind:'pdf',note:'indexed oa'});
+    })());
+  }
+  if(ids.pmid){
+    jobs.push((async function(){
+      const e=await net('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:'+ids.pmid+'&format=json&resultType=core',{as:'json',direct:true,maxRoutes:2});
+      if(!e.ok) return;
+      const x=((e.body.resultList&&e.body.resultList.result)||[])[0];
+      if(x&&x.pmcid){
+        emit({url:'https://www.ncbi.nlm.nih.gov/pmc/articles/'+x.pmcid+'/',source:'pmc',tier:1,kind:'landing',note:'pmc'});
+        if(x.isOpenAccess==='Y')
+          emit({url:'https://europepmc.org/api/fulltextRepo?pprId='+x.pmcid+'&type=FILE&fileName=main.pdf',source:'europe pmc',tier:1,kind:'pdf',note:x.pmcid});
+      }
+    })());
+  }
+  if(ids.arxiv) emit({url:'https://arxiv.org/pdf/'+ids.arxiv,source:'arxiv',tier:1,kind:'pdf',note:'preprint'});
+  await Promise.all(jobs);
+}
+
+async function stageShadow(ids,emit,log){
+  const doi=ids.doi;
+  if(!doi&&!ids.title) return;
+  if(doi){
+    const hosts=cfg.deep?cfg.sci:cfg.sci.slice(0,2);
+    const runs=hosts.map(async function(h){
+      const base=h.replace(/\/$/,'');
+      const pats=cfg.deep?['/meta/'+doi,'/'+doi]:['/meta/'+doi];
+      for(let i=0;i<pats.length;i++){
+        const land=base+pats[i];
+        emit({url:land,source:'sci-hub',tier:3,kind:'landing',note:'viewer'});
+        const r=await net(land,{as:'text',direct:false,maxRoutes:3});
+        if(!r.ok){log(h+' -> '+r.err);continue}
+        if(gated(r.body)){
+          log(h+' -> gated');health[h]='gated';saveHealth();
+          if(cfg.render){
+            const rr=await net(land,{as:'text',render:true,maxRoutes:2});
+            if(rr.ok&&!gated(rr.body)){
+              const f=grabPdf(rr.body,base);
+              if(f){emit({url:f,source:'sci-hub',tier:3,kind:'pdf',note:'via renderer',score:14});log(h+' -> via renderer')}
+            }
+          }
+          continue;
+        }
+        health[h]='ok';saveHealth();
+        const f=grabPdf(r.body,base);
+        if(f){emit({url:f,source:'sci-hub',tier:3,kind:'pdf',note:'embedded file',score:16});log(h+' -> file extracted');break}
+        if(/article not found|not found/i.test(r.body)) log(h+' -> not in corpus');
+      }
+    });
+    const anns=cfg.deep?cfg.ann:cfg.ann.slice(0,1);
+    const annRuns=anns.map(async function(h){
+      const base=h.replace(/\/$/,'');
+      const land=base+'/scidb/'+doi;
+      emit({url:land,source:"anna's archive",tier:2,kind:'landing',note:'scidb'});
+      const r=await net(land,{as:'text',direct:false,maxRoutes:2});
+      if(!r.ok) return;
+      const md5=r.body.match(/\/md5\/([a-f0-9]{32})/i);
+      if(!md5) return;
+      emit({url:base+'/md5/'+md5[1],source:"anna's archive",tier:2,kind:'landing',note:'record',score:14});
+      const dl=await net(base+'/slow_download/'+md5[1]+'/0/0',{as:'text',direct:false,maxRoutes:2});
+      if(dl.ok){
+        const f=grabPdf(dl.body,base);
+        if(f) emit({url:f,source:"anna's archive",tier:2,kind:'pdf',note:'direct download',score:20});
+      }
+    });
+    cfg.lib.forEach(function(h){
+      emit({url:h.replace(/\/$/,'')+'/index.php?req='+encodeURIComponent(doi),source:'libgen',tier:2,kind:'landing',note:'scimag'});
+    });
+    cfg.nexus.forEach(function(h){
+      emit({url:h.replace(/\/$/,'')+'/search?q='+encodeURIComponent(doi),source:'nexus stc',tier:2,kind:'landing',note:'scopus'});
+    });
+    await Promise.all(runs.concat(annRuns));
+  } else {
+    cfg.lib.slice(0,2).forEach(function(h){
+      emit({url:h.replace(/\/$/,'')+'/index.php?req='+encodeURIComponent(ids.title),source:'libgen',tier:2,kind:'landing',note:'title search'});
+    });
+  }
+}
+
+function stageHandoff(ids,emit){
+  const q=ids.doi||ids.arxiv||ids.pmid||ids.title;
+  if(!q) return;
+  if(cfg.tor&&ids.doi) emit({url:'https://scihub22266oqcxt.onion.pet/'+ids.doi,source:'tor gateway',tier:4,kind:'landing',note:'tor2web'});
+  if(cfg.tg&&ids.doi){
+    emit({url:'https://sci-net.xyz/request/'+ids.doi,source:'sci-net',tier:4,kind:'landing',note:'upload queue, minutes'});
+    [['scihubot','sci-hub'],['nexus_search_bot','nexus'],['libgenbot','libgen']].forEach(function(p){
+      emit({url:'https://t.me/'+p[0]+'?text='+encodeURIComponent(ids.doi),source:'telegram',tier:4,kind:'bot',note:p[1]+' bot'});
+    });
+  }
+}
+
+async function stageRescue(ids,m,emit,log){
+  const q=(m&&m.title)||ids.title||ids.doi;
+  const e=q?encodeURIComponent(q):null;
+  if(ids.ieee) emit({url:'https://ieeexplore.ieee.org/document/'+ids.ieee,source:'ieee',tier:4,kind:'landing',note:'record page'});
+  if(e){
+    emit({url:'https://scholar.google.com/scholar?q='+e,source:'google scholar',tier:4,kind:'landing',note:'all versions'});
+    emit({url:'https://www.base-search.net/Search/Results?lookfor='+e,source:'base',tier:4,kind:'landing',note:'oa aggregator'});
+  }
+  log('rescue armed');
+}
+
+async function fetchBlob(c,tmo,emit){
+  if(blobs.has(c.url)) return blobs.get(c.url);
+  const r=await net(c.url,{as:'blob',direct:false,maxRoutes:4,tmo:tmo||25000});
+  if(!r.ok) return null;
+  let b=r.body;
+  if(!b||b.size<800) return null;
+  if(/pdf/i.test(b.type||'')){blobs.set(c.url,b);return b;}
+  let txt='';
+  try{txt=await b.slice(0,60000).text()}catch(e){}
+  if(gated(txt)) return null;
+  const f=grabPdf(txt,c.url);
+  if(f&&f!==c.url&&emit){
+    emit({url:f,source:c.source,tier:c.tier,kind:'pdf',note:'resolved from page',score:18});
+    const r2=await net(f,{as:'blob',direct:false,maxRoutes:3,tmo:tmo||25000});
+    if(r2.ok&&r2.body&&/pdf/i.test(r2.body.type||'')){blobs.set(f,r2.body);return r2.body;}
+  }
+  if(b.size>25000){blobs.set(c.url,b);return b;}
+  return null;
+}
+
+async function verify(list,log,emit){
+  const pdfs=list.filter(function(c){return c.kind==='pdf'&&!c.verified})
+                 .sort(function(a,b){return b.score-a.score})
+                 .slice(0,cfg.deep?8:4);
+  if(!pdfs.length){log('nothing to probe');return}
+  let ok=0,gate=0;
+  await Promise.all(pdfs.map(async function(c){
+    const b=await fetchBlob(c,18000,emit);
+    if(!b){c.score-=15;c.note='tab only';stats.dead++;return}
+    if(!/pdf/i.test(b.type||'')&&b.size<25000){
+      let t='';try{t=await b.slice(0,3000).text()}catch(e){}
+      if(gated(t)){c.score-=6;c.note='gated — tab';gate++;return}
+      c.score-=8;c.note='not a pdf';return;
+    }
+    c.verified=true;c.score+=40;c.note='verified pdf · '+((b.size/1024)|0)+' kb';ok++;
+  }));
+  stats.gated+=gate;stats.ok+=ok;saveStats();
+  log('probed '+pdfs.length+', direct '+ok+(gate?', gated '+gate:''));
+}
+
+function objUrl(c,b){
+  if(urls.has(c.url)) return urls.get(c.url);
+  const u=URL.createObjectURL(b);urls.set(c.url,u);return u;
+}
+
+const STEPS=['parse','identifiers','metadata','publisher','open access','shadow','verify','done'];
+function paint(act,state){
+  $('pipe').innerHTML=STEPS.map(function(s,i){
+    let c='st';
+    if(i<act) c+=' ok';else if(i===act) c+=' '+(state||'run');
+    return '<span class="'+c+'">'+(i+1)+' '+s+'</span>';
+  }).join('');
+}
+paint(-1);
+function logTo(el,m){
+  let l=el.querySelector('.log');
+  if(!l){l=document.createElement('div');l.className='log';el.appendChild(l)}
+  l.textContent+=now()+'  '+m+'\n';
+  if(l.textContent.length>7000) l.textContent=l.textContent.slice(-4500);
+}
+function cite(m,fmt){
+  const A=(m.authors&&m.authors.length)?m.authors:['Unknown'];
+  const y=m.year||'n.d.',t=m.title||'Untitled',v=m.venue||'',d=m.doi||'';
+  const last=function(a){const p=a.split(' ');return p.length>1?p[p.length-1]+', '+p.slice(0,-1).map(function(x){return x[0]+'.'}).join(' '):a};
+  if(fmt==='bib') return '@article{'+(d||'ref').replace(/[^\w]/g,'')+',\n  title={'+t+'},\n  author={'+A.join(' and ')+'},\n  year={'+y+'},\n  journal={'+v+'},\n  doi={'+d+'}\n}';
+  if(fmt==='ris') return 'TY  - JOUR\n'+A.map(function(a){return 'AU  - '+a}).join('\n')+'\nTI  - '+t+'\nPY  - '+y+'\nJO  - '+v+'\nDO  - '+d+'\nER  - ';
+  if(fmt==='apa') return A.map(last).join(', ')+' ('+y+'). '+t+'. '+(v?v+'. ':'')+(d?'https://doi.org/'+d:'');
+  return A.map(last).join(', and ')+'. "'+t+'." '+(v?v+', ':'')+y+'.';
+}
+
+let cancelled=false;
+
+async function doView(card,c,status,ctx){
+  status.textContent='fetching…';
+  let p=card.querySelector('.prev');if(p) p.remove();
+  p=document.createElement('div');p.className='prev';
+  p.innerHTML='<div class="ph">loading…</div>';
+  card.appendChild(p);
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const b=await fetchBlob(c,25000,ctx.emit);
+  if(b){
+    status.textContent='';
+    p.innerHTML='<iframe src="'+objUrl(c,b)+'"></iframe>';
+    return;
+  }
+  const remote='https://docs.google.com/viewer?url='+encodeURIComponent(c.url)+'&embedded=true';
+  p.innerHTML='';
+  const ifr=document.createElement('iframe');
+  ifr.src=remote;
+  p.appendChild(ifr);
+  setTimeout(function(){
+    status.innerHTML='if blank, <a href="'+esc(c.url)+'" target="_blank" rel="noopener">open in tab</a>';
+  },1500);
+}
+
+async function doDownload(c,status,btn,ctx){
+  if(btn){btn.disabled=true;btn.textContent='...'}
+  status.textContent='fetching…';
+  const title=(ctx.m&&ctx.m.title)||'paper';
+  const name=(title.slice(0,70).replace(/[^\w\d \-]/g,'').trim()||'paper')+'.pdf';
+  const b=await fetchBlob(c,25000,ctx.emit);
+  if(b){
+    const u=objUrl(c,b);
+    const a=document.createElement('a');
+    a.href=u;a.download=name;a.rel='noopener';
+    document.body.appendChild(a);a.click();a.remove();
+    stats.dl++;saveStats();hstat();
+    status.innerHTML='saved '+((b.size/1024)|0)+' kb — <a href="'+u+'" download="'+esc(name)+'">save again</a>';
+    if(btn){btn.disabled=false;btn.textContent='saved'}
+    toast('saved','s');
+    return;
+  }
+  window.open(c.url,'_blank','noopener');
+  stats.tab++;saveStats();hstat();
+  status.innerHTML='host refuses cross-origin — opened in tab · <a href="'+esc(c.url)+'" target="_blank" rel="noopener">again</a>';
+  if(btn){btn.disabled=false;btn.textContent='tab'}
+  toast('opened in tab','e');
+}
+
+function rowFor(card,rows,c,ctx){
+  const row=document.createElement('div');
+  row.className='cand';row.dataset.score=c.score;
+  row.innerHTML='<span class="bdg t'+c.tier+'">'+TNAME[c.tier]+'</span>'+
+    '<div class="cb"><div class="u">'+esc(c.url)+'</div>'+
+    '<div class="n">'+esc(c.source)+' · '+esc(c.note||'')+' · '+c.score+'</div>'+
+    '<div class="rs"></div>'+
+    '<div class="bar"><i style="width:'+Math.min(100,Math.max(4,c.score))+'%"></i></div></div>'+
+    '<div class="acts"><button class="primary" data-a="dl">download</button>'+
+    '<button class="ghost" data-a="pv">view</button>'+
+    '<a class="btn ghost" href="'+esc(c.url)+'" target="_blank" rel="noopener">open</a>'+
+    '<button class="ghost" data-a="copy">copy</button></div>';
+  const status=row.querySelector('.rs');
+  row.addEventListener('click',async function(ev){
+    const b=ev.target.closest('button');if(!b) return;
+    const a=b.dataset.a;
+    if(a==='copy'){try{await navigator.clipboard.writeText(c.url);toast('copied','s')}catch(e){toast('blocked','e')}return}
+    if(a==='pv'){await doView(card,c,status,ctx);return}
+    if(a==='dl'){await doDownload(c,status,b,ctx);}
+  });
+  rows.appendChild(row);
+  return row;
+}
+function reorder(rows){
+  const kids=[].slice.call(rows.children);
+  kids.sort(function(a,b){return (+b.dataset.score||0)-(+a.dataset.score||0)});
+  kids.forEach(function(k){rows.appendChild(k)});
+  kids.forEach(function(k,i){k.classList.toggle('top',i===0)});
+}
+
+async function resolveOne(raw,card){
+  const log=function(m){logTo(card,m)};
+  const ids=parse(raw);
+  paint(0);
+  card.innerHTML='<div class="ch"><span class="bdg t4">input</span><span class="v">'+esc(raw)+'</span></div>';
+  if(!ids.doi&&!ids.arxiv&&!ids.pmid&&!ids.title&&!ids.ieee){
+    card.insertAdjacentHTML('beforeend','<div class="meta">nothing parseable</div>');return;
+  }
+  log('parsed: '+JSON.stringify({doi:ids.doi,ieee:ids.ieee,arxiv:ids.arxiv,pmid:ids.pmid}));
+  const list=[];const ctx={m:null,emit:null};
+  const rows=document.createElement('div');rows.className='rows';
+  const sum=document.createElement('div');sum.className='sum';
+  sum.innerHTML='<span class="pill" data-cnt>0 routes</span><span class="pill" data-v>0 direct</span>';
+  card.appendChild(sum);card.appendChild(rows);
+  ctx.emit=function(c){
+    if(!c.url||seen.has(c.url)) return;
+    seen.add(c.url);list.push(mk(c));rowFor(card,rows,c,ctx);
+    sum.querySelector('[data-cnt]').textContent=list.length+' routes';
+    reorder(rows);
+  };
+  const emit=ctx.emit;
+  paint(1);
+  await recoverIds(ids,log);
+  paint(2);
+  const m=await meta(ids,null);
+  ctx.m=m;
+  if(cancelled) return;
+  const head=document.createElement('div');head.className='meta';
+  if(m.title){
+    head.innerHTML='<b>'+esc(m.title)+'</b> · '+(m.year||'n.d.')+(m.venue?' · '+esc(m.venue):'')+
+      (m.doi?' · <span style="font-family:ui-monospace">'+esc(m.doi)+'</span>':'')+
+      (m.authors.length?'<div class="ab">'+esc(m.authors.join(', '))+'</div>':'')+
+      (m.abstract?'<div class="ab">'+esc(m.abstract)+'</div><a data-ab>abstract</a>':'');
+  } else head.innerHTML='<b>metadata thin</b> — continuing on identifiers';
+  card.insertBefore(head,sum);
+  head.addEventListener('click',function(e){
+    if(e.target.hasAttribute('data-ab')){
+      const ab=head.querySelectorAll('.ab');const last=ab[ab.length-1];
+      last.classList.toggle('open');e.target.textContent=last.classList.contains('open')?'hide':'abstract';
+    }
+  });
+  if(m.title||ids.doi){
+    const cbar=document.createElement('div');cbar.className='sum';
+    [['bib','BibTeX'],['ris','RIS'],['apa','APA'],['mla','MLA']].forEach(function(pair){
+      const b=document.createElement('button');
+      b.className='ghost sm';b.textContent=pair[1];
+      b.onclick=async function(){
+        try{await navigator.clipboard.writeText(cite(m,pair[0]));toast(pair[1]+' copied','s')}
+        catch(e){toast('blocked','e')}
+      };
+      cbar.appendChild(b);
+    });
+    const sv=document.createElement('button');
+    sv.className='ghost sm';sv.textContent='Save';
+    sv.onclick=function(){
+      lib.unshift({id:uid(),t:m.title||raw,doi:m.doi||ids.doi,authors:m.authors,year:m.year,venue:m.venue,t0:Date.now()});
+      saveLib();toast('saved','s');
+    };
+    cbar.appendChild(sv);
+    card.insertBefore(cbar,sum);
+  }
+  paint(3);
+  if(cfg.pub){try{await stagePublisher(ids,emit,log)}catch(e){log('pub error '+e.message)}}
+  paint(4);
+  try{await stageOA(ids,emit,log)}catch(e){log('oa error '+e.message)}
+  paint(5);
+  try{await stageShadow(ids,emit,log)}catch(e){log('shadow error '+e.message)}
+  stageHandoff(ids,emit);
+  await verify(list,log,emit);
+  if(!list.some(function(c){return c.verified})) await stageRescue(ids,m,emit,log);
+  sum.querySelector('[data-v]').textContent=list.filter(function(c){return c.verified}).length+' direct';
+  reorder(rows);
+  const best=list.slice().sort(function(a,b){return b.score-a.score})[0];
+  if(best){
+    const bar=document.createElement('div');bar.className='sum';
+    bar.innerHTML='<span class="pill g">best: '+esc(best.source)+'</span>';
+    const b1=document.createElement('button');
+    b1.className='primary sm';b1.textContent='Download best';
+    b1.onclick=function(){doDownload(best,bar,b1,ctx)};
+    const b2=document.createElement('button');
+    b2.className='ghost sm';b2.textContent='View best';
+    b2.onclick=function(){doView(card,best,bar,ctx)};
+    bar.appendChild(b1);bar.appendChild(b2);
+    card.insertBefore(bar,sum);
+  }
+  paint(7,list.length?'ok':'warn');
+  if(cfg.auto){
+    const v=list.filter(function(c){return c.verified})[0];
+    if(v&&document.querySelectorAll('.card').length===1) await doDownload(v,rows.querySelector('.rs'),null,ctx);
+  }
+}
+
+let busy=false;
+async function run(){
+  if(busy){toast('already running','e');return}
+  $('banner').classList.add('hidden');
+  const items=$('inp').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  if(!items.length){$('out').innerHTML='<div class="empty">empty — paste a DOI or link</div>';$('inp').focus();return}
+  busy=true;cancelled=false;seen.clear();blobs.clear();
+  urls.forEach(function(u){URL.revokeObjectURL(u)});urls.clear();
+  $('go').disabled=true;$('stop').disabled=false;$('out').innerHTML='';
+  stats.run++;saveStats();hstat();
+  $('status').textContent='resolving '+items.length;
+  const cards=items.map(function(){const d=document.createElement('div');d.className='card';$('out').appendChild(d);return d});
+  let cur=0,done=0;
+  await Promise.all(Array.from({length:Math.min(cfg.conc,items.length)},async function(){
+    while(cur<items.length&&!cancelled){
+      const k=cur++;
+      try{await resolveOne(items[k],cards[k])}
+      catch(e){fail('resolve',e);cards[k].insertAdjacentHTML('beforeend','<div class="meta">error: '+esc(e.message)+'</div>')}
+      done++;$('status').textContent='resolved '+done+'/'+items.length;
+    }
+  }));
+  busy=false;$('go').disabled=false;$('stop').disabled=true;
+  $('status').textContent=(cancelled?'stopped ':'done — ')+done+'/'+items.length;
+  hstat();
+}
+function hstat(){
+  $('hstats').innerHTML='<span>runs <b>'+stats.run+'</b></span><span>direct <b>'+stats.ok+'</b></span>'+
+    '<span>gated <b>'+stats.gated+'</b></span><span>tab <b>'+stats.tab+'</b></span>';
+}
+
+function drawLib(){
+  $('libCnt').textContent=lib.length;
+  if(!lib.length){$('libList').innerHTML='<div class="empty">nothing saved</div>';return}
+  $('libList').innerHTML='';
+  lib.forEach(function(it){
+    const r=document.createElement('div');r.className='librow';
+    r.innerHTML='<div class="cb"><b>'+esc(it.t||'untitled')+'</b><div class="n">'+
+      esc((it.authors||[]).join(', ').slice(0,80))+(it.year?' · '+esc(it.year):'')+'</div></div>'+
+      '<div class="acts"><button class="ghost" data-a="re">re-resolve</button><button class="ghost" data-a="rm">del</button></div>';
+    r.querySelector('[data-a=re]').onclick=function(){$('inp').value=it.doi||it.t;tab('resolve');run()};
+    r.querySelector('[data-a=rm]').onclick=function(){lib=lib.filter(function(x){return x.id!==it.id});saveLib();drawLib()};
+    $('libList').appendChild(r);
+  });
+}
+$('libExport').onclick=function(){
+  const txt=lib.map(function(it){return cite({authors:it.authors,title:it.t,year:it.year,venue:it.venue,doi:it.doi},'bib')}).join('\n\n');
+  const b=new Blob([txt||'% empty'],{type:'text/plain'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download='library.bib';a.click();URL.revokeObjectURL(u);
+};
+$('libCsv').onclick=function(){
+  const rows=[['title','authors','year','venue','doi']].concat(lib.map(function(it){return [it.t,(it.authors||[]).join('; '),it.year,it.venue,it.doi]}));
+  const csv=rows.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
+  const b=new Blob([csv],{type:'text/csv'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download='library.csv';a.click();URL.revokeObjectURL(u);
+};
+$('libWipe').onclick=function(){if(!confirm('wipe library?'))return;lib=[];saveLib();drawLib()};
+
+const ALLM=function(){return [].concat(cfg.sci,cfg.ann,cfg.lib,cfg.nexus)};
+function drawMirrors(){
+  const rows=ALLM().map(function(h){
+    const st=health[h]||'idle';
+    const cls=st==='ok'?'okc':st==='gated'?'gtc':st==='down'?'dnc':'';
+    return '<tr><td>'+esc(h)+'</td><td class="'+cls+'">'+st+'</td>'+
+      '<td><button class="ghost sm" data-t="'+esc(h)+'">test</button> '+
+      '<button class="ghost sm" data-d="'+esc(h)+'">del</button></td></tr>';
+  }).join('');
+  $('mTable').innerHTML='<table><thead><tr><th>host</th><th>status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+  $('mTable').querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(){testMirror(b.dataset.t)}});
+  $('mTable').querySelectorAll('[data-d]').forEach(function(b){
+    b.onclick=function(){
+      const h=b.dataset.d;
+      ['sci','ann','lib','nexus'].forEach(function(k){cfg[k]=cfg[k].filter(function(x){return x!==h})});
+      saveCfg();drawMirrors();
+    };
+  });
+}
+async function testMirror(h){
+  const probe=h.replace(/\/$/,'')+'/meta/10.1038/s41586-020-2649-2';
+  const t0=performance.now();
+  const r=await net(probe,{as:'text',direct:false,maxRoutes:3,tmo:12000});
+  const ms=Math.round(performance.now()-t0);
+  if(!r.ok){health[h]='down';toast(h+' down','e')}
+  else if(gated(r.body)){health[h]='gated';toast(h+' gated '+ms,'w')}
+  else{health[h]='ok';toast(h+' ok '+ms,'s')}
+  saveHealth();drawMirrors();
+}
+$('mTest').onclick=async function(){const hs=ALLM();toast('testing '+hs.length);for(let i=0;i<hs.length;i++)await testMirror(hs[i])};
+$('mAddBtn').onclick=function(){
+  const v=$('mAdd').value.trim().replace(/\/$/,'');
+  if(!/^https?:\/\//.test(v)){toast('need url','e');return}
+  cfg.sci.push(v);saveCfg();$('mAdd').value='';drawMirrors();toast('added','s');
+};
+
+function drawStats(){
+  const cells=[['runs',stats.run],['direct',stats.ok],['gated',stats.gated],['tab',stats.tab],['saved',stats.dl],['dead',stats.dead]];
+  $('statGrid').innerHTML=cells.map(function(c){return '<div class="cell"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+'</div></div>'}).join('');
+  const hs=Object.keys(health);
+  $('srcTable').innerHTML=hs.length?'<table><tbody>'+hs.map(function(h){
+    return '<tr><td>'+esc(h)+'</td><td class="'+(health[h]==='ok'?'okc':health[h]==='gated'?'gtc':'dnc')+'">'+health[h]+'</td></tr>';
+  }).join('')+'</tbody></table>':'<div class="empty">no host data</div>';
+}
+$('statReset').onclick=function(){stats={run:0,ok:0,gated:0,dead:0,dl:0,tab:0};saveStats();hstat();drawStats()};
+
+const PROT={
+  note:function(w){toast(w+' blocked — source protected','e')},
+  init:function(){
+    if(!cfg.prot) return;
+    document.addEventListener('contextmenu',function(e){
+      if(e.target.closest('input,textarea')) return;
+      e.preventDefault();PROT.note('right click');
+    });
+    document.addEventListener('selectstart',function(e){
+      if(e.target.closest('input,textarea,.cb .u,.log,.meta')) return;
+      e.preventDefault();
+    });
+    document.addEventListener('dragstart',function(e){if(!e.target.closest('input,textarea')) e.preventDefault()});
+    document.addEventListener('copy',function(e){
+      if(!cfg.mark) return;
+      if(e.target.closest('input,textarea')) return;
+      const sel=String(window.getSelection());
+      if(sel) e.clipboardData.setData('text/plain',sel+'\n\n— via resolver');
+    });
+    document.addEventListener('keydown',function(e){
+      const k=(e.key||'').toLowerCase();
+      if(e.key==='F12'){e.preventDefault();PROT.note('devtools')}
+      if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='j'||k==='c')){e.preventDefault();PROT.note('devtools')}
+      if((e.ctrlKey||e.metaKey)&&k==='u'){e.preventDefault();PROT.note('source view')}
+      if((e.ctrlKey||e.metaKey)&&k==='s'){e.preventDefault();PROT.note('page save')}
+    });
+    if(cfg.trap) setInterval(function(){try{(function(){debugger})()}catch(e){}},900);
+  }
+};
+
+function tab(n){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.tab===n)});
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.toggle('on',p.id==='p-'+n)});
+  if(n==='library')drawLib();
+  if(n==='mirrors')drawMirrors();
+  if(n==='stats')drawStats();
+}
+$('tabs').addEventListener('click',function(e){const t=e.target.closest('.tab');if(t)tab(t.dataset.tab)});
+
+function fill(){
+  $('email').value=cfg.email;$('conc').value=cfg.conc;$('tmo').value=cfg.tmo;$('proxyUrl').value=cfg.proxyUrl;
+  $('oDeep').checked=cfg.deep;$('oRender').checked=cfg.render;$('oOa').checked=cfg.oa;
+  $('oPub').checked=cfg.pub;$('oAuto').checked=cfg.auto;$('oTor').checked=cfg.tor;$('oTg').checked=cfg.tg;
+  $('oProt').checked=cfg.prot;$('oTrap').checked=cfg.trap;$('oMark').checked=cfg.mark;
+}
+function pull(){
+  cfg.email=$('email').value||DEF.email;
+  cfg.conc=Math.max(1,Math.min(4,+$('conc').value||2));
+  cfg.tmo=Math.max(4000,Math.min(40000,+$('tmo').value||12000));
+  cfg.proxyUrl=$('proxyUrl').value.trim().replace(/\/$/,'');
+  cfg.deep=$('oDeep').checked;cfg.render=$('oRender').checked;cfg.oa=$('oOa').checked;
+  cfg.pub=$('oPub').checked;cfg.auto=$('oAuto').checked;cfg.tor=$('oTor').checked;cfg.tg=$('oTg').checked;
+  cfg.prot=$('oProt').checked;cfg.trap=$('oTrap').checked;cfg.mark=$('oMark').checked;
+  saveCfg();
+}
+$('proxySave').onclick=function(){
+  cfg.proxyUrl=$('proxyUrl').value.trim().replace(/\/$/,'');saveCfg();
+  if(!cfg.proxyUrl){toast('cleared — relays only','e');return}
+  net('https://api.crossref.org/works/10.1038/s41586-020-2649-2',{as:'text',direct:false,maxRoutes:1,tmo:10000})
+    .then(function(r){toast(r.ok&&r.via==='own-proxy'?'proxy works':'proxy responded, check url',r.ok?'s':'e')})
+    .catch(function(){toast('proxy unreachable','e')});
+};
+
+function boot(){
+  $('go').onclick=run;
+  $('stop').onclick=function(){cancelled=true;toast('stopping')};
+  $('demo').onclick=function(){
+    $('inp').value='https://ieeexplore.ieee.org/document/11629706\n10.1038/s41586-020-2649-2\narXiv:1706.03762';
+    $('status').textContent='demo loaded';$('inp').focus();
+  };
+  $('paste').onclick=async function(){
+    try{const t=await navigator.clipboard.readText();if(t){$('inp').value=t;toast('pasted','s')}}
+    catch(e){toast('clipboard blocked','e')}
+  };
+  $('advBtn').onclick=function(){$('adv').classList.toggle('hidden')};
+  $('themeBtn').onclick=function(){document.documentElement.dataset.theme=document.documentElement.dataset.theme==='light'?'dark':'light'};
+  $('sSave').onclick=function(){pull();toast('saved','s')};
+  $('sExport').onclick=function(){
+    const b=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);
+    const a=document.createElement('a');a.href=u;a.download='resolver.json';a.click();URL.revokeObjectURL(u);
+  };
+  $('sWipe').onclick=function(){if(!confirm('wipe all?'))return;localStorage.clear();location.reload()};
+  $('inp').addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();run()}});
+  ['dragover','dragenter'].forEach(function(t){$('drop').addEventListener(t,function(e){e.preventDefault();$('drop').classList.add('drag')})});
+  ['dragleave','drop'].forEach(function(t){$('drop').addEventListener(t,function(e){e.preventDefault();$('drop').classList.remove('drag')})});
+  $('drop').addEventListener('drop',function(e){
+    const t=e.dataTransfer.getData('text');
+    if(t){$('inp').value+=($('inp').value?'\n':'')+t.trim();toast('dropped','s')}
+  });
+  fill();hstat();drawLib();drawMirrors();drawStats();PROT.init();
+  $('status').textContent='ready — single file, no server';
+}
+try{boot()}catch(e){fail('boot',e)}
+window.rx={parse:parse,run:run,cfg:function(){return cfg}};
+})();
+</script>
+</body>
+</html>
